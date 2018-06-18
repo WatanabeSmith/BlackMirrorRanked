@@ -1,18 +1,8 @@
----
-title: "BlackMirrorRankedVotingSankey"
-author: "Kevin Watanabe-Smith"
-date: "2018-06-18"
-output:
-  html_document:
-    toc: true
-    toc_float: true
-    keep_md: true
----
+Check out my [final blog post]() for an explanation of this repo, or the walkthrough [vignette]()!
 
+Raw data stored in [CompiledRedditRanks.csv](https://github.com/WatanabeSmith/BlackMirrorRanked/blob/master/CompiledRedditRanks.csv)
 
 ![Final Visualization](https://raw.githubusercontent.com/WatanabeSmith/BlackMirrorRanked/master/BlackMirrorRankedSankey.png "Ranked choice elimination for favorite Black Mirror episode")
-
-Check out my [final blog post]() or walkthrough [vignette]()!
 
 ```r
 library(tidyverse)
