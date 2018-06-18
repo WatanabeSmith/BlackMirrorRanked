@@ -1,0 +1,578 @@
+---
+title: "BlackMirrorRankedVotingSankey"
+author: "Kevin Watanabe-Smith"
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    toc: true
+    toc_float: true
+    keep_md: true
+---
+
+```{r}
+library(tidyverse)
+library(forcats)
+library(ggbeeswarm)
+
+library(alluvial)
+library(ggalluvial)
+library(extrafont)
+colortable <- read_csv("color_palette.csv")
+
+```
+
+```{r}
+rawranks <- read_csv("CompiledRedditRanks.csv")
+
+summary(rawranks)
+
+longranks <- rawranks %>% 
+  mutate(id = factor(id)) %>% 
+  gather(key = episode, value = ranking, -user, -other, -id)
+
+by_avg_ranks <-longranks %>% 
+  group_by(episode) %>% 
+  summarise(avg_rank = mean(ranking, na.rm = TRUE)) %>% arrange(avg_rank) %>% 
+  mutate(episode = fct_inorder(episode))
+
+ggplot(longranks, aes(y = ranking, x = factor(episode, levels = levels(by_avg_ranks$episode)))) +
+  geom_boxplot() +
+  scale_y_reverse()
+
+longcolor <- longranks %>% 
+  left_join(colortable, by = "episode")
+
+ggplot(longcolor, aes(y = ranking, x = factor(episode, levels = levels(by_avg_ranks$episode)),
+                      color = color)) +
+  scale_color_identity() +
+  #geom_boxplot(outlier.shape = NA) +
+  #geom_quasirandom() +
+  geom_boxplot(fill = NA, outlier.shape = NA) + 
+  geom_jitter(height = 0.2, width = 0.2, size = 4, alpha = 0.6) +
+  scale_y_reverse() +
+  xlab("") +
+  theme(axis.text = element_text(angle = 45, hjust = 1),
+        panel.background = element_blank())
+```
+
+Top vote getter
+```{r}
+n_users <- longranks %>% filter(ranking == 1) %>% nrow()
+
+votecount <- longranks %>% 
+  filter(ranking == 1) %>% 
+  group_by(episode) %>% 
+  summarise(votes = n(), pct = n() / n_users) %>% 
+  arrange(desc(pct))
+
+votecolor <- votecount %>% 
+  left_join(colortable, by = "episode")
+
+ggplot(votecolor, aes(x = fct_inorder(episode), y = pct,
+                      color = color, fill = color)) +
+  scale_color_identity() +
+  scale_fill_identity() +
+  geom_bar(stat = "identity") +
+  theme(panel.background = element_blank(),
+        axis.ticks = element_blank(),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.title = element_blank(),
+        text = element_text(family = "Century Gothic", face = "bold"),
+        plot.title = element_text(hjust = 0.5, size = 20),
+        plot.subtitle = element_text(hjust = 0.5, size = 16)) +  
+  xlab("") +
+  ylab("Percent of 1st place votes")
+```
+
+Jungle primary
+```{r}
+toptwo <- longranks %>% filter(episode == "White Christmas" | episode == "Shut Up and Dance")
+
+runoff_final <- toptwo %>% arrange(ranking) %>% 
+  filter(!is.na(ranking)) %>% 
+  .[!duplicated(.$id),] %>% 
+  group_by(episode) %>% 
+  summarise(votes = n(), pct = n() / n_users) %>% 
+  arrange(desc(pct))
+
+ggplot(runoff_final, aes(x = fct_inorder(episode), y = pct)) +
+  geom_bar(stat = "identity")
+```
+
+Ranked preference
+
+```{r, fig.width=12, fig.height=8}
+removed_episodes <- vector()
+
+roundone <- longranks %>% 
+  arrange(ranking) %>% 
+  filter(!is.na(ranking)) %>% 
+  .[!duplicated(.$id),] %>% 
+  group_by(episode) %>% 
+  summarise(votes = n(), pct = n() / n_users) %>% 
+  arrange(desc(pct))
+
+ggplot(roundone, aes(x = fct_inorder(episode), y = pct)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 45))
+
+removed_episodes <- append(removed_episodes, c("The Waldo Moment", "Playtest", "Crocodile", "Arkangel", "Metalhead", "Men Against Fire"))
+
+
+roundtwo <- longranks %>% 
+  filter(!episode %in% removed_episodes) %>% 
+  arrange(ranking) %>% 
+  filter(!is.na(ranking)) %>% 
+  .[!duplicated(.$id),] %>% 
+  group_by(episode) %>% 
+  summarise(votes = n(), pct = n() / n_users) %>% 
+  arrange(desc(pct))
+
+ggplot(roundtwo, aes(x = fct_inorder(episode), y = pct)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 45))
+
+removed_episodes <- append(removed_episodes, c("Black Museum", "Hang the DJ", "Hated in the Nation", "The National Anthem"))
+
+roundthree <- longranks %>% 
+  filter(!episode %in% removed_episodes) %>% 
+  arrange(ranking) %>% 
+  filter(!is.na(ranking)) %>% 
+  .[!duplicated(.$id),] %>% 
+  group_by(episode) %>% 
+  summarise(votes = n(), pct = n() / n_users) %>% 
+  arrange(desc(pct))
+
+ggplot(roundthree, aes(x = fct_inorder(episode), y = pct)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 45))
+
+
+removed_episodes <- append(removed_episodes, c("Nosedive"))
+
+roundfour <- longranks %>% 
+  filter(!episode %in% removed_episodes) %>% 
+  arrange(ranking) %>% 
+  filter(!is.na(ranking)) %>% 
+  .[!duplicated(.$id),] %>% 
+  group_by(episode) %>% 
+  summarise(votes = n(), pct = n() / n_users) %>% 
+  arrange(desc(pct))
+
+ggplot(roundfour, aes(x = fct_inorder(episode), y = pct)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 45))
+
+
+removed_episodes <- append(removed_episodes, c("USS Callister"))
+
+round5<- longranks %>% 
+  filter(!episode %in% removed_episodes) %>% 
+  arrange(ranking) %>% 
+  filter(!is.na(ranking)) %>% 
+  .[!duplicated(.$id),] %>% 
+  group_by(episode) %>% 
+  summarise(votes = n(), pct = n() / n_users) %>% 
+  arrange(desc(pct))
+
+ggplot(round5, aes(x = fct_inorder(episode), y = pct)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 45))
+
+
+removed_episodes <- append(removed_episodes, c("White Bear"))
+
+round6<- longranks %>% 
+  filter(!episode %in% removed_episodes) %>% 
+  arrange(ranking) %>% 
+  filter(!is.na(ranking)) %>% 
+  .[!duplicated(.$id),] %>% 
+  group_by(episode) %>% 
+  summarise(votes = n(), pct = n() / n_users) %>% 
+  arrange(desc(pct))
+
+ggplot(round6, aes(x = fct_inorder(episode), y = pct)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 45))
+
+removed_episodes <- append(removed_episodes, c("Be Right Back"))
+
+round7 <- longranks %>% 
+  filter(!episode %in% removed_episodes) %>% 
+  arrange(ranking) %>% 
+  filter(!is.na(ranking)) %>% 
+  .[!duplicated(.$id),] %>% 
+  group_by(episode) %>% 
+  summarise(votes = n(), pct = n() / n_users) %>% 
+  arrange(desc(pct))
+
+ggplot(round7, aes(x = fct_inorder(episode), y = pct)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 45))
+
+
+removed_episodes <- append(removed_episodes, c("Fifteen Million Merits"))
+
+round8 <- longranks %>% 
+  filter(!episode %in% removed_episodes) %>% 
+  arrange(ranking) %>% 
+  filter(!is.na(ranking)) %>% 
+  .[!duplicated(.$id),] %>% 
+  group_by(episode) %>% 
+  summarise(votes = n(), pct = n() / n_users) %>% 
+  arrange(desc(pct))
+
+ggplot(round8, aes(x = fct_inorder(episode), y = pct)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 45))
+
+removed_episodes <- append(removed_episodes, c("The Entire History of You"))
+
+round9 <- longranks %>% 
+  filter(!episode %in% removed_episodes) %>% 
+  arrange(ranking) %>% 
+  filter(!is.na(ranking)) %>% 
+  .[!duplicated(.$id),] %>% 
+  group_by(episode) %>% 
+  summarise(votes = n(), pct = n() / n_users) %>% 
+  arrange(desc(pct))
+
+ggplot(round9, aes(x = fct_inorder(episode), y = pct)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 45))
+
+
+removed_episodes <- append(removed_episodes, c("Shut Up and Dance"))
+
+round10 <- longranks %>% 
+  filter(!episode %in% removed_episodes) %>% 
+  arrange(ranking) %>% 
+  filter(!is.na(ranking)) %>% 
+  .[!duplicated(.$id),] %>% 
+  group_by(episode) %>% 
+  summarise(votes = n(), pct = n() / n_users) %>% 
+  arrange(desc(pct))
+
+ggplot(round10, aes(x = fct_inorder(episode), y = pct)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 45))
+```
+
+```{r}
+alluranks <- longranks %>% 
+  select(a_id = id) %>% unique()
+
+longcomplete <- longranks %>% 
+  filter(!is.na(ranking))
+
+episode_list <- longcomplete %>% 
+  select(episode) %>% unique() %>% .$episode %>% as.character()
+
+user <- vector()
+r_ep <- vector()
+r_round <- vector()
+roundcounter <- 0
+
+while(length(episode_list) > 1){
+  roundcounter <- roundcounter + 1
+  
+  for(i in alluranks$a_id) {
+    choice <- longcomplete %>% 
+      filter(episode %in% episode_list) %>% 
+      filter(id == i) %>% 
+      arrange(ranking) %>% .$episode %>% .[1]
+    
+    if(is.na(choice)) {next}
+    
+    user <- append(user, i)
+    r_ep <- append(r_ep, choice)
+    r_round <- append(r_round, roundcounter)
+  }
+  
+  growing_df <- data.frame(id = user, round = r_round, episode = r_ep) 
+  
+  episode_list <- growing_df %>% 
+    filter(r_round == roundcounter & !is.na(episode)) %>% 
+    group_by(episode) %>% count() %>% 
+    ungroup() %>% filter(n > min(n)) %>% .$episode %>% as.character()
+  
+  print(episode_list)
+  
+}
+
+#choice_lodes <- to_lodes(growing_df, axes = 1:2)
+
+#ggplot(choice_lodes, aes(x = round, stratum = episode, alluvim = id)) +
+ # geom_flow()
+
+growing_df$episode <- as.factor(growing_df$episode)
+growing_df$id <- as.factor(growing_df$id)
+
+growing_df_color <- growing_df %>% left_join(colortable, by="episode")
+
+ggplot(growing_df_color, aes(x = round, stratum = episode, alluvium = id,
+                       fill = color, label = episode)) +
+  theme(panel.background = element_blank(),
+        axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        axis.title = element_blank(),
+        text = element_text(family = "Century Gothic", face = "bold"),
+        plot.title = element_text(hjust = 0.5, size = 20),
+        plot.subtitle = element_text(hjust = 0.5, size = 16)) +
+  geom_flow(stat = "alluvium", lode.guidance = "leftright") +
+  geom_stratum(size = 0, color = NA) +
+  scale_fill_identity() +
+  ggtitle("Ranked Choice Voting for Black Mirror Episodes") +
+  labs(subtitle = "All episodes") +
+  geom_text(stat = "stratum", family = "Century Gothic", fontface = "bold", color = "gray15")
+
+# majors$curriculum <- as.factor(majors$curriculum)
+# ggplot(majors,
+#        aes(x = semester, stratum = curriculum, alluvium = student,
+#            fill = curriculum, label = curriculum)) +
+#   scale_fill_brewer(type = "qual", palette = "Set2") +
+#   geom_flow(stat = "alluvium", lode.guidance = "rightleft",
+#             color = "darkgray") +
+#   geom_stratum() +
+#   theme(legend.position = "bottom") +
+#   ggtitle("student curricula across several semesters")
+```
+
+Non white christmas run
+
+```{r}
+noWC <- longcomplete %>% 
+  filter(episode != "White Christmas")
+
+noWC_firstvotes <- noWC %>% 
+  group_by(episode) %>% 
+  arrange(ranking) %>% 
+  .[!duplicated(.$id),] %>%
+  summarise(votes = n(), pct = n() / n_users) %>% 
+  arrange(desc(pct))
+
+ggplot(noWC_firstvotes, aes(x = fct_inorder(episode), y = pct)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle=45, hjust = 1))
+```
+
+Non white christmas ranked choice
+
+```{r}
+noWC_ids <- noWC %>% 
+  select(a_id = id) %>% unique()
+
+episode_list <- noWC %>% 
+  select(episode) %>% unique() %>% .$episode %>% as.character()
+
+user <- vector()
+r_ep <- vector()
+r_round <- vector()
+roundcounter <- 0
+
+while(length(episode_list) > 1){
+  roundcounter <- roundcounter + 1
+  
+  for(i in noWC_ids$a_id) {
+    choice <- noWC %>% 
+      filter(episode %in% episode_list) %>% 
+      filter(id == i) %>% 
+      arrange(ranking) %>% .$episode %>% .[1]
+    
+    if(is.na(choice)) {next}
+    
+    user <- append(user, i)
+    r_ep <- append(r_ep, choice)
+    r_round <- append(r_round, roundcounter)
+  }
+  
+  noWC_df <- data.frame(id = user, round = r_round, episode = r_ep) 
+  
+  episode_list <- noWC_df %>% 
+    filter(r_round == roundcounter & !is.na(episode)) %>% 
+    group_by(episode) %>% count() %>% 
+    ungroup() %>% filter(n > min(n)) %>% .$episode %>% as.character()
+  
+  print(episode_list)
+  
+}
+
+#choice_lodes <- to_lodes(growing_df, axes = 1:2)
+
+#ggplot(choice_lodes, aes(x = round, stratum = episode, alluvim = id)) +
+ # geom_flow()
+
+noWC_df$episode <- as.factor(noWC_df$episode)
+noWC_df$id <- as.factor(noWC_df$id)
+
+ggplot(noWC_df, aes(x = round, stratum = episode, alluvium = id,
+                       fill = episode, label = episode)) +
+  geom_flow(stat = "alluvium", lode.guidance = "leftright") +
+  geom_stratum() +
+  geom_text(stat = "stratum", label.strata = TRUE)
+
+```
+
+Add in a category for Exhausted
+
+```{r}
+noWC_ids <- noWC %>% 
+  select(a_id = id) %>% unique()
+
+episode_list <- noWC %>% 
+  select(episode) %>% unique() %>% .$episode %>% as.character()
+
+user <- vector()
+r_ep <- vector()
+r_round <- vector()
+roundcounter <- 0
+
+while(length(episode_list) > 1){
+  roundcounter <- roundcounter + 1
+  
+  for(i in noWC_ids$a_id) {
+    choice <- noWC %>% 
+      filter(episode %in% episode_list) %>% 
+      filter(id == i) %>% 
+      arrange(ranking) %>% .$episode %>% .[1]
+    
+    if(is.na(choice)) {choice <- "-"}
+    
+    user <- append(user, i)
+    r_ep <- append(r_ep, choice)
+    r_round <- append(r_round, roundcounter)
+  }
+  
+  noWC_df <- data.frame(id = user, round = r_round, episode = r_ep) 
+  
+  episode_list <- noWC_df %>% 
+    filter(r_round == roundcounter & !is.na(episode) & episode != "-") %>% 
+    group_by(episode) %>% count() %>% 
+    ungroup() %>% filter(n > min(n)) %>% .$episode %>% as.character()
+  
+  print(episode_list)
+  
+}
+
+noWC_df$episode <- as.factor(noWC_df$episode)
+noWC_df$id <- as.factor(noWC_df$id)
+
+ggplot(noWC_df, aes(x = round, stratum = episode, alluvium = id,
+                       fill = episode, label = episode)) +
+  geom_flow(stat = "alluvium", lode.guidance = "leftright") +
+  geom_stratum() +
+  geom_text(stat = "stratum", label.strata = TRUE)
+```
+
+```{r}
+colortable <- read_csv("color_palette.csv")
+
+noWC_color <- noWC_df %>% left_join(colortable, by = "episode")
+
+ggplot(noWC_color, aes(x = round, stratum = episode, alluvium = id,
+                       fill = color, label = episode)) +
+  theme(panel.background = element_blank(),
+        axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        axis.title = element_blank(),
+        text = element_text(family = "Century Gothic", face = "bold"),
+        plot.title = element_text(hjust = 0.5, size = 20),
+        plot.subtitle = element_text(hjust = 0.5, size = 16)) +
+  geom_flow(stat = "alluvium", lode.guidance = "leftright") +
+  geom_stratum(size = 0, color = NA) +
+  scale_fill_identity() +
+  ggtitle("Ranked Choice Voting for Black Mirror Episodes") +
+  labs(subtitle = "Non-Jon Hamm edition") +
+  geom_text(stat = "stratum", family = "Century Gothic", fontface = "bold", color = "gray15")
+```
+
+
+```{r}
+noWC_ids <- noWC %>% 
+  select(a_id = id) %>% unique()
+
+episode_list <- noWC %>% 
+  select(episode) %>% unique() %>% .$episode %>% as.character()
+
+user <- vector()
+r_ep <- vector()
+r_round <- vector()
+roundcounter <- 0
+
+while(length(episode_list) > 1){
+  roundcounter <- roundcounter + 1
+  
+  for(i in noWC_ids$a_id) {
+    choice <- noWC %>% 
+      filter(episode %in% episode_list) %>% 
+      filter(id == i) %>% 
+      arrange(ranking) %>% .$episode %>% .[1]
+    
+    #if(is.na(choice)) {next}
+    if(is.na(choice)) {choice <- "-"}
+    
+    user <- append(user, i)
+    r_ep <- append(r_ep, choice)
+    r_round <- append(r_round, roundcounter)
+  }
+  
+  noWC_df <- data.frame(id = user, round = r_round, episode = r_ep) 
+  
+  episode_list <- noWC_df %>% 
+    filter(r_round == roundcounter & !is.na(episode) & episode != "-") %>% 
+    group_by(episode) %>% count() %>% 
+    ungroup() %>% filter(n > min(n)) %>% .$episode %>% as.character()
+  
+  print(episode_list)
+  
+}
+
+noWC_df$episode <- as.factor(noWC_df$episode)
+noWC_df$id <- as.factor(noWC_df$id)
+
+noWC_color <- noWC_df %>% left_join(colortable, by = "episode")
+
+ggplot(data = 
+         noWC_color, 
+       aes(x = round, stratum = episode, alluvium = id,
+                       fill = color, label = episode)) +
+  theme(panel.background = element_blank(),
+        axis.ticks = element_blank(),
+        axis.text.y = element_blank(),
+        axis.text.x = element_text(size = 12),
+        axis.title = element_blank(),
+        text = element_text(family = "Century Gothic", face = "bold"),
+        plot.title = element_text(hjust = 0.5, size = 16),
+        plot.subtitle = element_text(hjust = 0.5, size = 12)) +
+  geom_flow(stat = "alluvium", lode.guidance = "leftright") +
+  geom_stratum(size = 0, color = NA, na.rm = TRUE) +
+  scale_fill_identity() +
+  ggtitle("Ranked Choice Voting for Black Mirror Episodes") +
+  labs(subtitle = "Non-Jon Hamm edition") +
+  geom_text(stat = "stratum", family = "Century Gothic", fontface = "bold", color = "gray15", size = 3) +
+  scale_x_continuous(breaks = seq(1,10,1), labels = c("Round 1", "Round 2", "Round 3",
+                                                     "Round 4", "Round 5", "Round 6",
+                                                     "Round 7", "Round 8", "Round 9",
+                                                     "Round 10"))
+
+# ggplot(noWC_color, aes(x = round, stratum = episode, alluvium = id,
+#                        fill = color, label = episode)) +
+#   theme(panel.background = element_blank(),
+#         axis.ticks = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.text.x = element_text(size = 14),
+#         axis.title = element_blank(),
+#         text = element_text(family = "Century Gothic", face = "bold"),
+#         plot.title = element_text(hjust = 0.5, size = 20)) +
+#   geom_flow(stat = "alluvium", lode.guidance = "leftright") +
+#   geom_stratum(size = 0, color = NA, na.rm = TRUE) +
+#   scale_fill_identity() +
+#   ggtitle("Ranked Choice Voting for Black Mirror Episodes") +
+#   geom_text(stat = "stratum", family = "Century Gothic", fontface = "bold", color = "gray15") +
+#   scale_x_continuous(breaks = seq(1,10,1), labels = c("Round 1", "Round 2", "Round 3",
+#                                                      "Round 4", "Round 5", "Round 6",
+#                                                      "Round 7", "Round 8", "Round 9",
+#                                                      "Round 10"))
+```
+
+https://cran.r-project.org/web/packages/ggalluvial/vignettes/ggalluvial.html
