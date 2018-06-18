@@ -555,6 +555,8 @@ ggplot(data =
                                                      "Round 7", "Round 8", "Round 9",
                                                      "Round 10"))
 
+ggsave("BlackMirrorRankedSankey.png", height = 10, width = 15)
+
 # ggplot(noWC_color, aes(x = round, stratum = episode, alluvium = id,
 #                        fill = color, label = episode)) +
 #   theme(panel.background = element_blank(),
