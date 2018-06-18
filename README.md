@@ -1,4 +1,4 @@
-Check out my [final blog post]() for an explanation of this repo, or the walkthrough [vignette]()!
+Check out my [final blog post](http://watanabesmith.rbind.io/post/ranked-black-mirror/) for an explanation of this repo, or the walkthrough [vignette](https://watanabesmith.rbind.io/post/behind-the-viz-ranked-black-mirror/)!
 
 Raw data stored in [CompiledRedditRanks.csv](https://github.com/WatanabeSmith/BlackMirrorRanked/blob/master/CompiledRedditRanks.csv)
 
